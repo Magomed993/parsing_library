@@ -60,6 +60,7 @@ def main():
             tag = soup.find('h1').text.split('::')
             img = soup.find('div', class_='bookimage').find('img')['src']
             comment_tags = soup.find_all('div', class_='texts')
+            genre_tag = soup.find('span', class_='d_book').find_all('a')
             title = tag[0].strip()
             author = tag[1].strip()
             filename = f"{i}. {title} - {author}"
@@ -69,10 +70,15 @@ def main():
             # download_image(site_integration, f'{i}{path_separation[-1]}', directory_img)
             # download_txt(url_download, filename, directory_books)
             print(f'Заголовок: {title}')
+            genre_lst = []
+            for i in genre_tag:
+                genre_lst.append(i.text)
+            print(genre_lst)
+
             # print(urljoin(book_site, img))
             # print()
-            for comment in comment_tags:
-                print(comment.find('span').text)
+            # for comment in comment_tags:
+            #     print(comment.find('span').text)
         except requests.exceptions.HTTPError as http_error:
             print(f'Ошибка на ID {i}: {http_error}')
             continue
