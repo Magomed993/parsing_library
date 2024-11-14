@@ -59,17 +59,20 @@ def main():
             soup = BeautifulSoup(response.text, 'lxml')
             tag = soup.find('h1').text.split('::')
             img = soup.find('div', class_='bookimage').find('img')['src']
+            comment_tags = soup.find_all('div', class_='texts')
             title = tag[0].strip()
             author = tag[1].strip()
             filename = f"{i}. {title} - {author}"
             site_integration = urljoin(book_site, img)
             link_parse = urlparse(site_integration)
             path_separation = os.path.splitext(link_parse.path)
-            download_image(site_integration, f'{i}{path_separation[-1]}', directory_img)
-            download_txt(url_download, filename, directory_books)
-            # print(f'Заголовок: {title}')
+            # download_image(site_integration, f'{i}{path_separation[-1]}', directory_img)
+            # download_txt(url_download, filename, directory_books)
+            print(f'Заголовок: {title}')
             # print(urljoin(book_site, img))
             # print()
+            for comment in comment_tags:
+                print(comment.find('span').text)
         except requests.exceptions.HTTPError as http_error:
             print(f'Ошибка на ID {i}: {http_error}')
             continue
