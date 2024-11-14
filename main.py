@@ -2,6 +2,8 @@ import requests
 import os
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from urllib.parse import urlparse, urlsplit, unquote
 
 
 def check_for_redirect(response):
@@ -28,9 +30,23 @@ def download_txt(url, filename, folder='books/'):
     return directory
 
 
+def download_image(url, filename, folder='image/'):
+    response = requests.get(url)
+    response.raise_for_status()
+    format_filename = sanitize_filename(filename)
+    directory = f'{folder}{format_filename}'
+    check_for_redirect(response)
+    with open(directory, 'wb') as file:
+        file.write(response.content)
+    return directory
+
+
 def main():
-    directory = 'books/'
-    os.makedirs(directory, exist_ok=True)
+    directory_books = 'books/'
+    directory_img = 'image/'
+    os.makedirs(directory_books, exist_ok=True)
+    os.makedirs(directory_img, exist_ok=True)
+    book_site = 'https://tululu.org/'
 
     for i in range(1, 11):
         url_download = f"https://tululu.org/txt.php?id={i}"
@@ -42,10 +58,18 @@ def main():
             check_for_redirect(response)
             soup = BeautifulSoup(response.text, 'lxml')
             tag = soup.find('h1').text.split('::')
+            img = soup.find('div', class_='bookimage').find('img')['src']
             title = tag[0].strip()
             author = tag[1].strip()
             filename = f"{i}. {title} - {author}"
-            download_txt(url_download, filename, directory)
+            site_integration = urljoin(book_site, img)
+            link_parse = urlparse(site_integration)
+            path_separation = os.path.splitext(link_parse.path)
+            download_image(site_integration, f'{i}{path_separation[-1]}', directory_img)
+            download_txt(url_download, filename, directory_books)
+            # print(f'Заголовок: {title}')
+            # print(urljoin(book_site, img))
+            # print()
         except requests.exceptions.HTTPError as http_error:
             print(f'Ошибка на ID {i}: {http_error}')
             continue
