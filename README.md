@@ -1,7 +1,7 @@
-# Парсер книг с сайта tululu.org
-Скачивание книг с сайта tululu.org
+# Парсер книг с сайта [tululu.org](https://tululu.org/)
+Скачивание книг с сайта [tululu.org](https://tululu.org/)
 ## Как установить
-Скачайте код с GitHub. Python3 должен быть уже установлен. 
+Скачайте код с [GitHub](https://github.com/). Python3 должен быть уже установлен. 
 Затем используйте pip (или pip3, есть конфликт с Python2) для установки зависимостей:
 ```
 pip install -r requirements.txt
@@ -11,12 +11,7 @@ pip install -r requirements.txt
 ```
 python3 tululu.py
 ```
-Скрипт выполняет скачивание книг с сайта tululu.org в текстовом формате txt, а также их изображение.
-### `bs4_tutorial.py`
-```
-python3 bs4_tutorial.py
-```
-Скрипт выводит пример работы библиотеки BeautifulSoup
+Скрипт выполняет скачивание книг с сайта [tululu.org](https://tululu.org/) в текстовом формате txt, а также их изображение.
 ## Аргументы
 Скрипт `tululu.py` принимает несколько аргументов:
 ```
