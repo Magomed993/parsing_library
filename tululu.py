@@ -13,18 +13,18 @@ def check_for_redirect(response):
 
 def download_txt(url, filename, folder='books/'):
     format_filename = sanitize_filename(filename)
-    directory = f'{folder}{format_filename}.txt'
-    with open(directory, 'wb') as file:
+    path = f'{folder}{format_filename}.txt'
+    with open(path, 'wb') as file:
         file.write(url.content)
-    return directory
+    return path
 
 
 def download_image(url, filename, folder='image/'):
     format_filename = sanitize_filename(filename)
-    directory = f'{folder}{format_filename}'
-    with open(directory, 'wb') as file:
+    path = f'{folder}{format_filename}'
+    with open(path, 'wb') as file:
         file.write(url.content)
-    return directory
+    return path
 
 
 def parse_book_page(response):
@@ -79,9 +79,9 @@ def main():
             book_details = parse_book_page(response_book_url)
             response_url_image = get_response(book_details['url_image'])
             filename = f"{number}. {book_details['name']} - {book_details['author']}"
-            link_parse = urlparse(book_details['url_image'])
-            path_separation = os.path.splitext(link_parse.path)
-            download_image(response_url_image, f'{number}{path_separation[-1]}', img_directory)
+            url_parts = urlparse(book_details['url_image'])
+            path_parts = os.path.splitext(url_parts.path)
+            download_image(response_url_image, f'{number}{path_parts[-1]}', img_directory)
             download_txt(response_book_txt, filename, books_directory)
             print('Название: ', book_details['name'])
             print('Автор: ', book_details['author'])
