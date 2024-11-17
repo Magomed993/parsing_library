@@ -3,8 +3,7 @@ import os
 import argparse
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 
 def check_for_redirect(response):
@@ -29,7 +28,6 @@ def download_image(url, filename, folder='image/'):
 
 
 def parse_book_page(response):
-    book_site = 'https://tululu.org/'
     soup = BeautifulSoup(response.text, 'lxml')
     title = soup.find('h1').text.split('::')
     img_path = soup.find('div', class_='bookimage').find('img')['src']
@@ -37,13 +35,9 @@ def parse_book_page(response):
     tag_genres = soup.find('span', class_='d_book').find_all('a')
     book_title = title[0].strip()
     author = title[1].strip()
-    image_link = urljoin(book_site, img_path)
-    comments = []
-    for comment in tag_comments:
-        comments.append(comment.find('span').text)
-    genres = []
-    for genre in tag_genres:
-        genres.append(genre.text)
+    image_link = urljoin(response.url, img_path)
+    comments = [comment.find('span').text for comment in tag_comments]
+    genres = [genre.text for genre in tag_genres]
     book_details = {
         'name': book_title,
         'author': author,
