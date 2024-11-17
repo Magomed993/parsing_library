@@ -32,26 +32,26 @@ def parse_book_page(response):
     book_site = 'https://tululu.org/'
     soup = BeautifulSoup(response.text, 'lxml')
     title = soup.find('h1').text.split('::')
-    path_img = soup.find('div', class_='bookimage').find('img')['src']
+    img_path = soup.find('div', class_='bookimage').find('img')['src']
     tag_comments = soup.find_all('div', class_='texts')
     tag_genres = soup.find('span', class_='d_book').find_all('a')
     book_title = title[0].strip()
     author = title[1].strip()
-    image_link = urljoin(book_site, path_img)
+    image_link = urljoin(book_site, img_path)
     comments = []
     for comment in tag_comments:
         comments.append(comment.find('span').text)
     genres = []
     for genre in tag_genres:
         genres.append(genre.text)
-    site_data = {
+    book_details = {
         'name': book_title,
         'author': author,
         'url_image': image_link,
         'comments': comments,
         'genre': genres,
     }
-    return site_data
+    return book_details
 
 
 def get_response(url, params=None):
@@ -78,19 +78,19 @@ def main():
         payload_url_txt = {
             'id': number,
         }
-        data_url = f'https://tululu.org/b{number}/'
+        url_book = f'https://tululu.org/b{number}/'
         try:
             response_book_txt = get_response(url_txt, payload_url_txt)
-            response_data_url = get_response(data_url)
-            data_book = parse_book_page(response_data_url)
-            response_url_image = get_response(data_book['url_image'])
-            filename = f"{number}. {data_book['name']} - {data_book['author']}"
-            link_parse = urlparse(data_book['url_image'])
+            response_book_url = get_response(url_book)
+            book_details = parse_book_page(response_book_url)
+            response_url_image = get_response(book_details['url_image'])
+            filename = f"{number}. {book_details['name']} - {book_details['author']}"
+            link_parse = urlparse(book_details['url_image'])
             path_separation = os.path.splitext(link_parse.path)
             download_image(response_url_image, f'{number}{path_separation[-1]}', img_directory)
             download_txt(response_book_txt, filename, books_directory)
-            print('Название: ', data_book['name'])
-            print('Автор: ', data_book['author'])
+            print('Название: ', book_details['name'])
+            print('Автор: ', book_details['author'])
             print()
         except requests.exceptions.HTTPError as error:
             print(f'{number}: {error}')
