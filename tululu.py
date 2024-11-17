@@ -13,54 +13,23 @@ def check_for_redirect(response):
 
 
 def download_txt(url, filename, folder='books/'):
-    """Функция для скачивания текстовых файлов.
-    Args:
-        url (str): Cсылка на текст, который хочется скачать.
-        filename (str): Имя файла, с которым сохранять.
-        folder (str): Папка, куда сохранять.
-    Returns:
-        str: Путь до файла, куда сохранён текст.
-    """
-    response = requests.get(url)
-    response.raise_for_status()
     format_filename = sanitize_filename(filename)
     directory = f'{folder}{format_filename}.txt'
-    check_for_redirect(response)
     with open(directory, 'wb') as file:
-        file.write(response.content)
+        file.write(url.content)
     return directory
 
 
 def download_image(url, filename, folder='image/'):
-    """Функция для скачивания картинок.
-        Args:
-            url (str): Cсылка на картинки, которые хочется скачать.
-            filename (str): Имя файла, с которым сохранять.
-            folder (str): Папка, куда сохранять.
-        Returns:
-            str: Путь до файла, куда сохранёны картинки.
-        """
-    response = requests.get(url)
-    response.raise_for_status()
     format_filename = sanitize_filename(filename)
     directory = f'{folder}{format_filename}'
-    check_for_redirect(response)
     with open(directory, 'wb') as file:
-        file.write(response.content)
+        file.write(url.content)
     return directory
 
 
-def parse_book_page(url):
-    """Функция для выявления данных из сайта tululu.org.
-        Args:
-            url (str): Cсылка на сайт, из которого выявляются данные.
-        Returns:
-            dict: Данные с сайта: название, автор, ссылка на картинку и т.д.
-        """
+def parse_book_page(response):
     book_site = 'https://tululu.org/'
-    response = requests.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     title = soup.find('h1').text.split('::')
     path_img = soup.find('div', class_='bookimage').find('img')['src']
@@ -85,6 +54,13 @@ def parse_book_page(url):
     return site_data
 
 
+def get_response(url, params=None):
+    response = requests.get(url, params)
+    response.raise_for_status()
+    check_for_redirect(response)
+    return response
+
+
 def main():
     books_directory = 'books/'
     img_directory = 'image/'
@@ -97,20 +73,27 @@ def main():
     argument_parse.add_argument('end_id', default=11, nargs='?', type=int, help='Конец цикла')
     args = argument_parse.parse_args()
 
-    for i in range(args.start_id, args.end_id):
-        url_txt = f"https://tululu.org/txt.php?id={i}"
-        data_url = f'https://tululu.org/b{i}/'
+    for number in range(args.start_id, args.end_id):
+        url_txt = f"https://tululu.org/txt.php"
+        payload_url_txt = {
+            'id': number,
+        }
+        data_url = f'https://tululu.org/b{number}/'
         try:
-            data_book = parse_book_page(data_url)
-            filename = f"{i}. {data_book['name']} - {data_book['author']}"
+            response_book_txt = get_response(url_txt, payload_url_txt)
+            response_data_url = get_response(data_url)
+            data_book = parse_book_page(response_data_url)
+            response_url_image = get_response(data_book['url_image'])
+            filename = f"{number}. {data_book['name']} - {data_book['author']}"
             link_parse = urlparse(data_book['url_image'])
             path_separation = os.path.splitext(link_parse.path)
-            download_image(data_book['url_image'], f'{i}{path_separation[-1]}', img_directory)
-            download_txt(url_txt, filename, books_directory)
+            download_image(response_url_image, f'{number}{path_separation[-1]}', img_directory)
+            download_txt(response_book_txt, filename, books_directory)
             print('Название: ', data_book['name'])
             print('Автор: ', data_book['author'])
             print()
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as error:
+            print(f'{number}: {error}')
             continue
 
 if __name__ == '__main__':
