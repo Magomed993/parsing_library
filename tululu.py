@@ -1,6 +1,7 @@
 import requests
 import os
 import argparse
+import sys
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -86,9 +87,12 @@ def main():
             print('Название: ', book_details['name'])
             print('Автор: ', book_details['author'])
             print()
+        except requests.exceptions.ConnectionError:
+            print('Соединение прервано. Скрипт продолжает работу', file=sys.stderr)
         except requests.exceptions.HTTPError as error:
-            print(f'{number}: {error}')
+            print(f'id книги - {number}: {error}', file=sys.stderr)
             continue
+
 
 if __name__ == '__main__':
     main()
