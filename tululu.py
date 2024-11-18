@@ -1,3 +1,4 @@
+import time
 import requests
 import os
 import argparse
@@ -13,14 +14,6 @@ def check_for_redirect(response):
 
 
 def download_txt(url, filename, folder='books/'):
-    format_filename = sanitize_filename(filename)
-    path = f'{folder}{format_filename}.txt'
-    with open(path, 'wb') as file:
-        file.write(url.content)
-    return path
-
-
-def download_image(url, filename, folder='image/'):
     format_filename = sanitize_filename(filename)
     path = f'{folder}{format_filename}'
     with open(path, 'wb') as file:
@@ -69,26 +62,27 @@ def main():
     args = argument_parse.parse_args()
 
     for number in range(args.start_id, args.end_id):
-        url_txt = f"https://tululu.org/txt.php"
-        payload_url_txt = {
+        txt_url = f"https://tululu.org/txt.php"
+        url_txt_payload = {
             'id': number,
         }
-        url_book = f'https://tululu.org/b{number}/'
+        book_url = f'https://tululu.org/b{number}/'
         try:
-            response_book_txt = get_response(url_txt, payload_url_txt)
-            response_book_url = get_response(url_book)
-            book_details = parse_book_page(response_book_url)
-            response_url_image = get_response(book_details['url_image'])
-            filename = f"{number}. {book_details['name']} - {book_details['author']}"
+            txt_url_response = get_response(txt_url, url_txt_payload)
+            book_url_response = get_response(book_url)
+            book_details = parse_book_page(book_url_response)
+            url_image_response = get_response(book_details['url_image'])
+            filename = f"{number}. {book_details['name']} - {book_details['author']}.txt"
             url_parts = urlparse(book_details['url_image'])
             path_parts = os.path.splitext(url_parts.path)
-            download_image(response_url_image, f'{number}{path_parts[-1]}', img_directory)
-            download_txt(response_book_txt, filename, books_directory)
+            download_txt(url_image_response, f'{number}{path_parts[-1]}', img_directory)
+            download_txt(txt_url_response, filename, books_directory)
             print('Название: ', book_details['name'])
             print('Автор: ', book_details['author'])
             print()
         except requests.exceptions.ConnectionError:
             print('Соединение прервано. Скрипт продолжает работу', file=sys.stderr)
+            time.sleep(1800)
         except requests.exceptions.HTTPError as error:
             print(f'id книги - {number}: {error}', file=sys.stderr)
             continue
