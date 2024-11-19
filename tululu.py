@@ -13,7 +13,7 @@ def check_for_redirect(response):
         raise requests.exceptions.HTTPError("Ошибочка на редиректе")
 
 
-def download_txt(url, filename, folder='books/'):
+def download_file(url, filename, folder='books/'):
     format_filename = sanitize_filename(filename)
     path = f'{folder}{format_filename}'
     with open(path, 'wb') as file:
@@ -75,8 +75,8 @@ def main():
             filename = f"{number}. {book_details['name']} - {book_details['author']}.txt"
             url_parts = urlparse(book_details['url_image'])
             path_parts = os.path.splitext(url_parts.path)
-            download_txt(url_image_response, f'{number}{path_parts[-1]}', img_directory)
-            download_txt(txt_url_response, filename, books_directory)
+            download_file(url_image_response, f'{number}{path_parts[-1]}', img_directory)
+            download_file(txt_url_response, filename, books_directory)
             print('Название: ', book_details['name'])
             print('Автор: ', book_details['author'])
             print()
