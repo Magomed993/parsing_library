@@ -16,31 +16,36 @@ def main():
 
     books_content = []
 
-    for number in range(1, 101):
+    for number in range(2, 3):
         url = f'https://tululu.org/l55/{number}'
         response = get_response(url)
 
         soup = BeautifulSoup(response.text, 'lxml')
-        books_path = soup.find_all('table', class_='d_book')
-
+        d_book_selector = 'table.d_book'
+        # books_path = soup.find_all('table', class_='d_book')
+        books_path = soup.select(d_book_selector)
         for book in books_path:
-            link = book.find('a')['href']
+            link = book.select_one('a')['href']
             book_link = urljoin(response.url, link)
             try:
                 book_link_response = get_response(book_link)
                 book_details = parse_book_page(book_link_response)
                 book_soup = BeautifulSoup(book_link_response.text, 'lxml')
-                d_book_table = book_soup.find('table', class_='d_book')
-                link_txt = d_book_table.find('a', title=f'{book_details['name']} - скачать книгу txt')
-                link_img = d_book_table.find('div', class_='bookimage').find('img')['src']
-                if link_txt is None:
+                d_book_table = book_soup.select_one(d_book_selector)
+                txt_link_selector = f'a[title="{book_details['name']} - скачать книгу txt"]'
+                # txt_link = d_book_table.find('a', title=f'{book_details['name']} - скачать книгу txt')
+                txt_link = d_book_table.select_one(txt_link_selector)
+                img_link_selector = 'div.bookimage img'
+                # img_link = d_book_table.find('div', class_='bookimage').find('img')['src']
+                img_link = d_book_table.select_one(img_link_selector)['src']
+                if txt_link is None:
                     raise requests.exceptions.HTTPError("Ошибочка")
-                link_txt_path = link_txt['href']
+                link_txt_path = txt_link['href']
                 download_book_path = urljoin(response.url, link_txt_path)
-                download_img_path = urljoin(response.url, link_img)
+                download_img_path = urljoin(response.url, img_link)
                 book_link_txt_response = get_response(download_book_path)
                 book_link_img_response = get_response(download_img_path)
-                url_img_parts = urlparse(link_img)
+                url_img_parts = urlparse(img_link)
                 url_txt_parts = urlparse(link_txt_path)
                 path_img_parts = os.path.splitext(url_img_parts.path)
                 path_txt_parts = os.path.splitext(url_txt_parts.query)
@@ -55,10 +60,12 @@ def main():
                 file_name = f'{book_txt_number}: {book_details['name']} - {book_details['author']}.txt'
                 download_file(book_link_txt_response, file_name, books_directory)
                 download_file(book_link_img_response, f'{book_img_number}{path_img_parts[-1]}', img_directory)
+                # book_txt_path = urlparse(book_link_txt_response)
                 book_content = {
                     'title': book_details['name'],
                     'author': book_details['author'],
-                    'img_src': path_txt_parts[0],
+                    'img_src': f'{img_directory}{book_img_number}{path_img_parts[-1]}',
+                    'book_path': f'{books_directory}{book_details['name']}.txt',
                     'comments': book_details['comments'],
                     'genres': book_details['genre']
                 }
