@@ -3,6 +3,7 @@ import requests
 import sys
 import re
 import json
+import argparse
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from tululu import get_response, download_file, parse_book_page
@@ -15,8 +16,13 @@ def main():
     os.makedirs(img_directory, exist_ok=True)
 
     books_content = []
-
-    for number in range(2, 3):
+    argument_parse = argparse.ArgumentParser(description="""Скачивает книги по страницам установленным по умолчанию.
+    Прописав аргументы даёт возможность установить диапазон страниц необходимое для скачивания книг (начало цикла - конец цикла).
+        """)
+    argument_parse.add_argument('start_page', default=1, nargs='?', type=int, help='Начало цикла')
+    argument_parse.add_argument('end_page', default=701, nargs='?', type=int, help='Конец цикла')
+    args = argument_parse.parse_args()
+    for number in range(args.start_page, args.end_page):
         url = f'https://tululu.org/l55/{number}'
         response = get_response(url)
 
@@ -27,19 +33,20 @@ def main():
         for book in books_path:
             link = book.select_one('a')['href']
             book_link = urljoin(response.url, link)
+
+            book_link_response = get_response(book_link)
+            book_details = parse_book_page(book_link_response)
+            book_soup = BeautifulSoup(book_link_response.text, 'lxml')
+            d_book_table = book_soup.select_one(d_book_selector)
+            txt_link_selector = f'a[title="{book_details['name']} - скачать книгу txt"]'
             try:
-                book_link_response = get_response(book_link)
-                book_details = parse_book_page(book_link_response)
-                book_soup = BeautifulSoup(book_link_response.text, 'lxml')
-                d_book_table = book_soup.select_one(d_book_selector)
-                txt_link_selector = f'a[title="{book_details['name']} - скачать книгу txt"]'
                 # txt_link = d_book_table.find('a', title=f'{book_details['name']} - скачать книгу txt')
                 txt_link = d_book_table.select_one(txt_link_selector)
                 img_link_selector = 'div.bookimage img'
                 # img_link = d_book_table.find('div', class_='bookimage').find('img')['src']
                 img_link = d_book_table.select_one(img_link_selector)['src']
                 if txt_link is None:
-                    raise requests.exceptions.HTTPError("Ошибочка")
+                    raise requests.exceptions.HTTPError("Невозможно скачать, контент недоступен")
                 link_txt_path = txt_link['href']
                 download_book_path = urljoin(response.url, link_txt_path)
                 download_img_path = urljoin(response.url, img_link)
@@ -70,9 +77,9 @@ def main():
                     'genres': book_details['genre']
                 }
                 books_content.append(book_content)
-                # print(book_link)
+                print(book_link_response.url)
             except requests.exceptions.HTTPError as error:
-                print(f'page - {number}: {error}', file=sys.stderr)
+                print(f'{book_link_response.url}: {error}', file=sys.stderr)
                 continue
     book_content_json = json.dumps(books_content)
     with open('book_content.json', 'w') as my_file:
