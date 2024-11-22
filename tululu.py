@@ -13,11 +13,11 @@ def check_for_redirect(response):
         raise requests.exceptions.HTTPError("Ошибочка на редиректе")
 
 
-def download_file(url, filename, folder='books/'):
+def download_file(response, filename, folder='books/'):
     format_filename = sanitize_filename(filename)
     path = f'{folder}{format_filename}'
     with open(path, 'wb') as file:
-        file.write(url.content)
+        file.write(response.content)
     return path
 
 
