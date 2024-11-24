@@ -18,8 +18,9 @@ def main():
 
     books_content = []
     argument_parse = argparse.ArgumentParser(description="""Скачивает книги по страницам установленным по умолчанию. 
-Прописав аргументы даёт возможность установить диапазон страниц необходимое для скачивания книг (начало цикла - конец цикла), 
-    не скачивать книги, не скачивать обложки, указать путь к данным.
+    Прописав аргументы даёт возможность установить диапазон страниц необходимое для скачивания книг 
+    (начало цикла - конец цикла), 
+    также имеет аргументы: не скачивать книги, не скачивать обложки, указать путь к данным.
     """)
     argument_parse.add_argument('start_page', default=1, nargs='?', type=int, help='Начало цикла')
     argument_parse.add_argument('end_page', default=701, nargs='?', type=int, help='Конец цикла')
@@ -30,14 +31,12 @@ def main():
     for number in range(args.start_page, args.end_page):
         url = f'https://tululu.org/l55/{number}'
         response = get_response(url)
-
         soup = BeautifulSoup(response.text, 'lxml')
         d_book_selector = 'table.d_book'
         books_path = soup.select(d_book_selector)
         for book in books_path:
             link = book.select_one('a')['href']
             book_link = urljoin(response.url, link)
-
             book_link_response = get_response(book_link)
             book_details = parse_book_page(book_link_response)
             book_soup = BeautifulSoup(book_link_response.text, 'lxml')
